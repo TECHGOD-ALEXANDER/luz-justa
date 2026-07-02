@@ -188,14 +188,22 @@ if st.button("CALCULAR PAGOS", use_container_width=True):
 
                 st.write(f"**{k}:** S/ {v:.2f}")
 
-            st.markdown(
-                f"""
-                <div class='total-box'>
-                💰 Total: S/ {total:.2f}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+         st.markdown(
+             f"""
+            <div style="
+                background:#2563EB;
+                color:white;
+                padding:12px;
+                border-radius:12px;
+                font-size:20px;
+                font-weight:bold;
+                margin-bottom:15px;
+            ">
+                🏠 Piso {i} • {kwh:.2f} kWh
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
             st.markdown("</div>", unsafe_allow_html=True)
 
