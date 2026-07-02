@@ -1,154 +1,94 @@
+
 import streamlit as st
+from io import BytesIO
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib import colors
 
-# ==========================
-# CONFIGURACIÓN
-# ==========================
+PRECIO_KWH=0.6134
+CARGO_FIJO=2.27
+MANTENIMIENTO=1.74
+ALUMBRADO=33.04
+INTERES=3.36
+IGV_RATE=0.18
+ELECTRIFICACION=6.92
+INTERES_EXTRA=0.35
 
-PRECIO_KWH = 0.6134
-CARGO_FIJO = 2.27
-MANTENIMIENTO = 1.74
-ALUMBRADO = 33.04
-INTERES = 3.36
-IGV = 0.18
-ELECTRIFICACION = 6.92
-INTERES_EXTRA = 0.35
+st.set_page_config(page_title="Luz Justa",page_icon="⚡",layout="centered")
 
-st.set_page_config(
-    page_title="Luz Justa",
-    page_icon="⚡",
-    layout="centered"
-)
-
-# ==========================
-# CSS
-# ==========================
-
-st.markdown("""
+st.markdown('''
 <style>
-
-.block-container{
-    max-width:850px;
-}
-
-footer{
-    visibility:hidden;
-}
-
+.block-container{max-width:900px;}
+.piso-header{background:linear-gradient(90deg,#2563EB,#3B82F6);color:white;padding:14px;border-radius:14px;font-size:22px;font-weight:bold;text-align:center;margin-bottom:10px;}
+.total-box{background:#FEF3C7;border:2px solid #F59E0B;border-radius:14px;padding:12px;text-align:center;color:#B45309;font-size:28px;font-weight:bold;}
+.techgod{text-align:center;color:#9CA3AF;margin-top:40px;font-style:italic;}
 </style>
-""", unsafe_allow_html=True)
+''', unsafe_allow_html=True)
 
-# ==========================
-# CABECERA
-# ==========================
+def crear_pdf(piso,detalle):
+    b=BytesIO()
+    d=SimpleDocTemplate(b)
+    data=[["Concepto","Monto (S/)"]]
+    for k,v in detalle.items():
+        data.append([k,f"{v:.2f}"])
+    t=Table(data,colWidths=[260,120])
+    t.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#2563EB")),
+        ("TEXTCOLOR",(0,0),(-1,0),colors.white),
+        ("GRID",(0,0),(-1,-1),1,colors.lightgrey),
+    ]))
+    d.build([t])
+    pdf=b.getvalue()
+    b.close()
+    return pdf
 
 st.title("⚡ Luz Justa")
-
-st.caption(
-    "Calcula cuánto debe pagar cada inquilino ingresando únicamente los kWh consumidos."
-)
-
+st.caption("Ingresa únicamente los kWh consumidos por cada piso.")
 st.divider()
 
-# ==========================
-# ENTRADAS
-# ==========================
-
-pisos = []
-
+pisos=[]
 for i in range(4):
+    pisos.append(st.number_input(f"🏠 Piso {i+1}",min_value=0.0,step=0.1,key=i))
 
-    valor = st.number_input(
-        f"🏠 Piso {i+1}",
-        min_value=0.0,
-        step=0.1,
-        key=i
-    )
+if st.button("⚡ CALCULAR PAGOS",use_container_width=True):
+    n=4
+    fijo=CARGO_FIJO/n
+    mant=MANTENIMIENTO/n
+    alum=ALUMBRADO/n
+    interes=INTERES/n
+    rural=ELECTRIFICACION/n
+    extra=INTERES_EXTRA/n
 
-    pisos.append(valor)
-
-# ==========================
-# BOTÓN
-# ==========================
-
-if st.button("⚡ CALCULAR PAGOS", use_container_width=True):
-
-    n = 4
-
-    fijo = CARGO_FIJO / n
-    mant = MANTENIMIENTO / n
-    alum = ALUMBRADO / n
-    interes = INTERES / n
-    rural = ELECTRIFICACION / n
-    extra = INTERES_EXTRA / n
-
-    st.divider()
-
-    for i, kwh in enumerate(pisos, start=1):
-
-        if kwh <= 0:
+    for i,kwh in enumerate(pisos,1):
+        if kwh<=0:
             continue
 
-        consumo = kwh * PRECIO_KWH
+        consumo=kwh*PRECIO_KWH
+        subtotal=consumo+fijo+mant+alum+interes
+        igv=subtotal*IGV_RATE
+        total=subtotal+igv+rural+extra
 
-        subtotal = consumo + fijo + mant + alum + interes
+        detalle={
+            "Costo de tu consumo":consumo,
+            "Cargo fijo":fijo,
+            "Mantenimiento":mant,
+            "Alumbrado público":alum,
+            "Interés compensatorio":interes,
+            "IGV (18%)":igv,
+            "Electrificación rural":rural,
+            "Interés adicional":extra,
+            "TOTAL A PAGAR":total
+        }
 
-        igv = subtotal * IGV
+        a,b=st.columns([4,1])
+        with a:
+            with st.container(border=True):
+                st.markdown(f'<div class="piso-header">🏠 Piso {i} • {kwh:.2f} kWh</div>',unsafe_allow_html=True)
+                x,y=st.columns([3,1])
+                for k,v in list(detalle.items())[:-1]:
+                    x.write(k)
+                    y.write(f"**S/ {v:.2f}**")
+                st.markdown(f'<div class="total-box">💰 S/ {total:.2f}</div>',unsafe_allow_html=True)
+        with b:
+            st.download_button("📄 Descargar",crear_pdf(i,detalle),file_name=f"recibo_piso_{i}.pdf",mime="application/pdf",use_container_width=True)
 
-        total = subtotal + igv + rural + extra
-
-        with st.container(border=True):
-
-            st.subheader(f"🏠 Piso {i} • {kwh:.2f} kWh")
-
-            col1, col2 = st.columns([3, 1])
-
-            with col1:
-
-                st.write(f"**Costo de tu consumo:** S/ {consumo:.2f}")
-                st.write(f"**Cargo fijo:** S/ {fijo:.2f}")
-                st.write(f"**Mantenimiento:** S/ {mant:.2f}")
-                st.write(f"**Alumbrado público:** S/ {alum:.2f}")
-                st.write(f"**Interés compensatorio:** S/ {interes:.2f}")
-                st.write(f"**IGV (18%):** S/ {igv:.2f}")
-                st.write(f"**Electrificación rural:** S/ {rural:.2f}")
-                st.write(f"**Interés adicional:** S/ {extra:.2f}")
-
-            with col2:
-
-                recibo = f"""
-LUZ JUSTA
-
-Piso {i}
-Consumo: {kwh:.2f} kWh
-
-Costo de tu consumo: S/ {consumo:.2f}
-Cargo fijo: S/ {fijo:.2f}
-Mantenimiento: S/ {mant:.2f}
-Alumbrado público: S/ {alum:.2f}
-Interés compensatorio: S/ {interes:.2f}
-IGV (18%): S/ {igv:.2f}
-Electrificación rural: S/ {rural:.2f}
-Interés adicional: S/ {extra:.2f}
-
-TOTAL: S/ {total:.2f}
-
-Powered by TECHGOD
-"""
-
-                st.download_button(
-                    "📄 Descargar",
-                    recibo,
-                    file_name=f"recibo_piso_{i}.txt",
-                    use_container_width=True
-                )
-
-            st.metric(
-                "💰 Total a pagar",
-                f"S/ {total:.2f}"
-            )
-
-            st.write("")
-
-st.divider()
-
-st.caption("Powered by - TECHGOD")
+st.markdown('<div class="techgod">Powered by - TECHGOD</div>',unsafe_allow_html=True)
