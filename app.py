@@ -18,7 +18,7 @@ ELECTRIFICACION = 6.92
 INTERES_EXTRA = 0.35
 
 # =====================
-# ESTILO
+# CONFIGURACIÓN STREAMLIT
 # =====================
 
 st.set_page_config(
@@ -27,36 +27,43 @@ st.set_page_config(
     layout="centered"
 )
 
+# =====================
+# ESTILOS
+# =====================
+
 st.markdown("""
 <style>
+
 .block-container{
-    padding-top:2rem;
     max-width:900px;
+    padding-top:2rem;
 }
 
 .card{
-    background:#f8fafc;
-    border-radius:18px;
+    background:#111827;
+    border-radius:20px;
     padding:18px;
-    border:1px solid #e5e7eb;
+    border:1px solid #374151;
     margin-bottom:20px;
 }
 
 .total-box{
-    background:#fef3c7;
-    padding:12px;
-    border-radius:12px;
+    background:#FEF3C7;
+    padding:15px;
+    border-radius:14px;
     text-align:center;
-    font-size:22px;
+    color:#B45309;
+    font-size:28px;
     font-weight:bold;
-    color:#b45309;
+    margin-top:15px;
 }
 
 .footer{
     text-align:center;
     color:gray;
-    margin-top:50px;
+    margin-top:60px;
 }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -69,34 +76,35 @@ def generar_pdf(piso, detalle):
     buffer = BytesIO()
 
     doc = SimpleDocTemplate(buffer)
+
     estilos = getSampleStyleSheet()
 
     elementos = []
 
     elementos.append(
-        Paragraph("<b>⚡ LUZ JUSTA</b>", estilos["Title"])
+        Paragraph("⚡ <b>LUZ JUSTA</b>", estilos["Title"])
     )
 
     elementos.append(
         Paragraph(f"Recibo Piso {piso}", estilos["Normal"])
     )
 
-    elementos.append(Spacer(1, 20))
+    elementos.append(Spacer(1,20))
 
-    data = [["Concepto", "Monto (S/)"]]
+    data = [["Concepto","Monto (S/)"]]
 
-    for k, v in detalle.items():
-        data.append([k, f"{v:.2f}"])
+    for k,v in detalle.items():
+        data.append([k,f"{v:.2f}"])
 
-    tabla = Table(data, colWidths=[280, 120])
+    tabla = Table(data, colWidths=[280,120])
 
     tabla.setStyle(TableStyle([
-        ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#2563EB")),
-        ("TEXTCOLOR", (0,0), (-1,0), colors.white),
-        ("GRID", (0,0), (-1,-1), 1, colors.lightgrey),
-        ("BACKGROUND", (0,1), (-1,-2), colors.whitesmoke),
-        ("BACKGROUND", (0,-1), (-1,-1), colors.HexColor("#DCFCE7")),
-        ("FONTNAME", (0,-1), (-1,-1), "Helvetica-Bold"),
+        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#2563EB")),
+        ("TEXTCOLOR",(0,0),(-1,0),colors.white),
+        ("GRID",(0,0),(-1,-1),1,colors.lightgrey),
+        ("BACKGROUND",(0,1),(-1,-2),colors.whitesmoke),
+        ("BACKGROUND",(0,-1),(-1,-1),colors.HexColor("#DCFCE7")),
+        ("FONTNAME",(0,-1),(-1,-1),"Helvetica-Bold"),
     ]))
 
     elementos.append(tabla)
@@ -104,6 +112,7 @@ def generar_pdf(piso, detalle):
     doc.build(elementos)
 
     pdf = buffer.getvalue()
+
     buffer.close()
 
     return pdf
@@ -134,7 +143,7 @@ for i in range(4):
 
     pisos.append(valor)
 
-if st.button("CALCULAR PAGOS", use_container_width=True):
+if st.button("⚡ CALCULAR PAGOS", use_container_width=True):
 
     n = 4
 
@@ -178,8 +187,20 @@ if st.button("CALCULAR PAGOS", use_container_width=True):
 
             st.markdown(
                 f"""
-                <div class='card'>
-                <h3>🏠 Piso {i} • {kwh:.2f} kWh</h3>
+                <div class="card">
+
+                    <div style="
+                        background:#2563EB;
+                        color:white;
+                        padding:14px;
+                        border-radius:14px;
+                        font-size:22px;
+                        font-weight:bold;
+                        margin-bottom:20px;
+                    ">
+                        🏠 Piso {i} • {kwh:.2f} kWh
+                    </div>
+
                 """,
                 unsafe_allow_html=True
             )
@@ -188,24 +209,16 @@ if st.button("CALCULAR PAGOS", use_container_width=True):
 
                 st.write(f"**{k}:** S/ {v:.2f}")
 
-         st.markdown(
-             f"""
-            <div style="
-                background:#2563EB;
-                color:white;
-                padding:12px;
-                border-radius:12px;
-                font-size:20px;
-                font-weight:bold;
-                margin-bottom:15px;
-            ">
-                🏠 Piso {i} • {kwh:.2f} kWh
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+            st.markdown(
+                f"""
+                <div class="total-box">
+                    💰 Total: S/ {total:.2f}
+                </div>
 
-            st.markdown("</div>", unsafe_allow_html=True)
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
         with col2:
 
@@ -220,6 +233,10 @@ if st.button("CALCULAR PAGOS", use_container_width=True):
             )
 
 st.markdown(
-    "<div class='footer'>Powered by - TECHGOD</div>",
+    """
+    <div class="footer">
+        Powered by - TECHGOD
+    </div>
+    """,
     unsafe_allow_html=True
 )
