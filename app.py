@@ -1,8 +1,8 @@
 import streamlit as st
 
-# =====================
+# ==========================
 # CONFIGURACIÓN
-# =====================
+# ==========================
 
 PRECIO_KWH = 0.6134
 CARGO_FIJO = 2.27
@@ -19,82 +19,56 @@ st.set_page_config(
     layout="centered"
 )
 
-# =====================
-# ESTILOS
-# =====================
+# ==========================
+# CSS
+# ==========================
 
 st.markdown("""
 <style>
 
-.block-container {
-    max-width: 850px;
+.block-container{
+    max-width:850px;
 }
 
-.card {
-    background: #0F172A;
-    border: 1px solid #1E293B;
-    border-radius: 18px;
-    padding: 18px;
-    margin-bottom: 20px;
-}
-
-.piso-header {
-    background: #2563EB;
-    color: white;
-    padding: 12px;
-    border-radius: 12px;
-    font-size: 20px;
-    font-weight: bold;
-    margin-bottom: 15px;
-}
-
-.total-box {
-    background: #FEF3C7;
-    color: #B45309;
-    padding: 14px;
-    border-radius: 14px;
-    text-align: center;
-    font-size: 28px;
-    font-weight: bold;
-    margin-top: 15px;
-}
-
-.footer {
-    text-align: center;
-    color: gray;
-    margin-top: 60px;
+footer{
+    visibility:hidden;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-# =====================
-# TÍTULO
-# =====================
+# ==========================
+# CABECERA
+# ==========================
 
 st.title("⚡ Luz Justa")
-st.caption("Ingresa únicamente los kWh consumidos por cada piso.")
+
+st.caption(
+    "Calcula cuánto debe pagar cada inquilino ingresando únicamente los kWh consumidos."
+)
 
 st.divider()
 
-# =====================
+# ==========================
 # ENTRADAS
-# =====================
+# ==========================
 
 pisos = []
 
 for i in range(4):
+
     valor = st.number_input(
         f"🏠 Piso {i+1}",
         min_value=0.0,
         step=0.1,
         key=i
     )
+
     pisos.append(valor)
 
-# =====================
-# CÁLCULO
-# =====================
+# ==========================
+# BOTÓN
+# ==========================
 
 if st.button("⚡ CALCULAR PAGOS", use_container_width=True):
 
@@ -115,46 +89,33 @@ if st.button("⚡ CALCULAR PAGOS", use_container_width=True):
             continue
 
         consumo = kwh * PRECIO_KWH
+
         subtotal = consumo + fijo + mant + alum + interes
+
         igv = subtotal * IGV
+
         total = subtotal + igv + rural + extra
 
-        st.markdown(
-            f"""
-            <div class="card">
+        with st.container(border=True):
 
-                <div class="piso-header">
-                    🏠 Piso {i} • {kwh:.2f} kWh
-                </div>
+            st.subheader(f"🏠 Piso {i} • {kwh:.2f} kWh")
 
-                <b>Costo de tu consumo:</b> S/ {consumo:.2f}<br><br>
+            col1, col2 = st.columns([3, 1])
 
-                <b>Cargo fijo:</b> S/ {fijo:.2f}<br><br>
+            with col1:
 
-                <b>Mantenimiento:</b> S/ {mant:.2f}<br><br>
+                st.write(f"**Costo de tu consumo:** S/ {consumo:.2f}")
+                st.write(f"**Cargo fijo:** S/ {fijo:.2f}")
+                st.write(f"**Mantenimiento:** S/ {mant:.2f}")
+                st.write(f"**Alumbrado público:** S/ {alum:.2f}")
+                st.write(f"**Interés compensatorio:** S/ {interes:.2f}")
+                st.write(f"**IGV (18%):** S/ {igv:.2f}")
+                st.write(f"**Electrificación rural:** S/ {rural:.2f}")
+                st.write(f"**Interés adicional:** S/ {extra:.2f}")
 
-                <b>Alumbrado público:</b> S/ {alum:.2f}<br><br>
+            with col2:
 
-                <b>Interés compensatorio:</b> S/ {interes:.2f}<br><br>
-
-                <b>IGV (18%):</b> S/ {igv:.2f}<br><br>
-
-                <b>Electrificación rural:</b> S/ {rural:.2f}<br><br>
-
-                <b>Interés adicional:</b> S/ {extra:.2f}
-
-                <div class="total-box">
-                    💰 Total: S/ {total:.2f}
-                </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        st.download_button(
-            label=f"📄 Descargar recibo Piso {i}",
-            data=f'''
+                recibo = f"""
 LUZ JUSTA
 
 Piso {i}
@@ -165,25 +126,29 @@ Cargo fijo: S/ {fijo:.2f}
 Mantenimiento: S/ {mant:.2f}
 Alumbrado público: S/ {alum:.2f}
 Interés compensatorio: S/ {interes:.2f}
-IGV: S/ {igv:.2f}
+IGV (18%): S/ {igv:.2f}
 Electrificación rural: S/ {rural:.2f}
 Interés adicional: S/ {extra:.2f}
 
 TOTAL: S/ {total:.2f}
 
 Powered by TECHGOD
-''',
-            file_name=f"recibo_piso_{i}.txt",
-            use_container_width=True
-        )
+"""
 
-        st.write("")
+                st.download_button(
+                    "📄 Descargar",
+                    recibo,
+                    file_name=f"recibo_piso_{i}.txt",
+                    use_container_width=True
+                )
 
-st.markdown(
-    """
-    <div class="footer">
-        Powered by - TECHGOD
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+            st.metric(
+                "💰 Total a pagar",
+                f"S/ {total:.2f}"
+            )
+
+            st.write("")
+
+st.divider()
+
+st.caption("Powered by - TECHGOD")
